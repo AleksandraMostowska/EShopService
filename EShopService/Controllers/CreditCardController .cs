@@ -20,15 +20,15 @@ namespace EShopService.Controllers
             }
             catch (CardNumberTooLongException ex)
             {
-                return BadRequest(new { message = ex.Message, code = 414 });
+                return StatusCode(414, new { message = ex.Message, code = 414 });
             }
             catch (CardNumberTooShortException ex)
             {
-                return BadRequest(new { message = ex.Message, code = 400 });
+                return StatusCode(400, new { message = ex.Message, code = 400 });
             }
             catch (CardNumberInvalidException ex)
             {
-                return BadRequest(new { message = ex.Message, code = 406 });
+                return StatusCode(406, new { message = ex.Message, code = 406 });
             }
             catch (Exception ex)
             {

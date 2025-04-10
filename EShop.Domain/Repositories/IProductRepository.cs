@@ -20,5 +20,9 @@ namespace EShop.Domain.Repositories
         public void Update(Product product);
 
         public void Delete(int id);
+
+        Category GetCategoryByName(string name);
+
+        void SaveChanges();
     }
 }

@@ -37,9 +37,19 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
     [Fact]
     public async Task Get_ReturnsListOfProducts()
     {
+
+
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+            await dbContext.SaveChangesAsync();
+
+            var electronics = new Category { Name = "Electronics" };
+            dbContext.Categories.Add(electronics);
+            await dbContext.SaveChangesAsync();
 
             dbContext.Products.Add(new Product
                 {
@@ -48,15 +58,18 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
                     Ean = "1234567890123",
                     Sku = "LAPTOP123",
                     Stock = 10,
-                    Category = new Category { Name = "Electronics" },
+                    Category = electronics,
                     CreatedBy = Guid.NewGuid(),
                     UpdatedBy = Guid.NewGuid()
                 }
             );
             await dbContext.SaveChangesAsync();
+
+            //dbContext.Products.RemoveRange(dbContext.Products);
+            //dbContext.Categories.RemoveRange(dbContext.Categories);
         }
 
-        var response = await _client.GetAsync("/api/product");
+        var response = await _client.GetAsync("/api/Product");
         response.EnsureSuccessStatusCode();
 
         var responseData = await response.Content.ReadAsStringAsync();
@@ -66,4 +79,328 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Single(products);
         Assert.Equal("Laptop", products[0].Name);
     }
+
+
+    [Fact]
+    public async Task GetById_ReturnsProduct_WhenProductExists()
+    {
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+            await dbContext.SaveChangesAsync();
+
+            var electronics = new Category { Name = "Electronics" };
+            dbContext.Categories.Add(electronics);
+            await dbContext.SaveChangesAsync();
+
+            var product = new Product
+            {
+                Id = 100,
+                Name = "Laptop",
+                Price = 4000,
+                Ean = "1234567890123",
+                Sku = "LAPTOP123",
+                Stock = 10,
+                Category = electronics,
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+
+            //dbContext.Products.RemoveRange(dbContext.Products);
+            //dbContext.Categories.RemoveRange(dbContext.Categories);
+        }
+
+        var response = await _client.GetAsync("/api/Product/100");
+        response.EnsureSuccessStatusCode();
+
+        var responseData = await response.Content.ReadAsStringAsync();
+        var productResult = JsonSerializer.Deserialize<Product>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        Assert.NotNull(productResult);
+        Assert.Equal("Laptop", productResult.Name);
+        Assert.Equal(4000, productResult.Price);
+    }
+
+
+    [Fact]
+    public async Task Delete_RemovesProduct()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+            await dbContext.SaveChangesAsync();
+            //await dbContext.Database.EnsureDeletedAsync();
+            //await dbContext.Database.EnsureCreatedAsync();
+
+            var category = new Category { Name = "SomeRandomCategory" };
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+
+            var product = new Product
+            {
+                Name = "ToDelete",
+                Price = 123,
+                Ean = "0000000000000",
+                Sku = "DEL123",
+                Stock = 1,
+                Category = category,
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+
+            var productId = product.Id;
+
+            var response = await _client.DeleteAsync($"/api/Product/{productId}");
+            response.EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        }
+    }
+
+
+
+    [Fact]
+    public async Task Post_AddsNewProduct()
+    {
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+            await dbContext.SaveChangesAsync();
+
+            var category = new Category { Name = "Electronics" };
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+
+            var newProduct = new
+            {
+                Name = "Laptop",
+                Price = 4000,
+                Ean = "1234567890123",
+                Sku = "LAPTOP123",
+                Stock = 10,
+                Category = new { Name = "Electronics" },
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(newProduct), System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync("/api/Product", content);
+
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            var product = JsonSerializer.Deserialize<Product>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.NotNull(product);
+            Assert.Equal("Laptop", product.Name);
+        }
+
+    }
+
+    [Fact]
+    public async Task SaveProductToInMemoryDatabase_WorksCorrectly()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        dbContext.Products.RemoveRange(dbContext.Products);
+        dbContext.Categories.RemoveRange(dbContext.Categories);
+        await dbContext.SaveChangesAsync();
+
+        //await dbContext.Database.EnsureDeletedAsync();
+        //await dbContext.Database.EnsureCreatedAsync();
+
+        var category = new Category { Name = "TestCategory" };
+        dbContext.Categories.Add(category);
+        await dbContext.SaveChangesAsync();
+
+        var product = new Product
+        {
+            Name = "TestProduct",
+            Price = 999,
+            Ean = "9999999999999",
+            Sku = "TEST999",
+            Stock = 5,
+            Category = category,
+            CreatedBy = Guid.NewGuid(),
+            UpdatedBy = Guid.NewGuid()
+        };
+
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync();
+
+        var savedProduct = await dbContext.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Sku == "TEST999");
+
+        Assert.NotNull(savedProduct);
+        Assert.Equal("TestProduct", savedProduct.Name);
+        Assert.Equal("TestCategory", savedProduct.Category.Name);
+    }
+
+    [Fact]
+    public async Task Put_UpdatesProduct_WithExistingCategory()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+
+            var category = new Category { Name = "Tech" };
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+
+            var product = new Product
+            {
+                Id = 1,
+                Name = "Laptop",
+                Price = 300,
+                Ean = "1111111111111",
+                Sku = "SKU001",
+                Stock = 5,
+                Category = category,
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+        }
+
+            var updatedProduct = new Product
+            {
+                Id = 1,
+                Name = "Smartphone",
+                Price = 350,
+                Ean = "1111111111111",
+                Sku = "SKU001",
+                Stock = 10,
+                Category = new Category { Name = "Tech" },
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+        var json = JsonSerializer.Serialize(updatedProduct, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _client.PutAsync("/api/Product/1", content);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_UpdatesProduct_WithNewCategory()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+
+            var category = new Category { Name = "Tech" };
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+
+            var product = new Product
+            {
+                Id = 1,
+                Name = "Laptop",
+                Price = 300,
+                Ean = "1111111111111",
+                Sku = "SKU001",
+                Stock = 5,
+                Category = category,
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+        }
+
+        var updatedProduct = new Product
+        {
+            Id = 1,
+            Name = "Jersey",
+            Price = 350,
+            Ean = "1111111111111",
+            Sku = "SKU001",
+            Stock = 10,
+            Category = new Category { Name = "Clothing" },
+            CreatedBy = Guid.NewGuid(),
+            UpdatedBy = Guid.NewGuid()
+        };
+
+        var json = JsonSerializer.Serialize(updatedProduct, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _client.PutAsync("/api/Product/1", content);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsNotFound_WhenProductDoesNotExist()
+    {
+        var response = await _client.GetAsync("/api/Product/123456789");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+
+    [Fact]
+    public async Task Put_ReturnsBadRequest_WhenIdMismatch()
+    {
+        var product = new Product
+        {
+            Id = 2,
+            Name = "Mismatch",
+            Price = 50,
+            Ean = "2222222222222",
+            Sku = "SKU002",
+            Stock = 0,
+            Category = new Category { Id = 1, Name = "Dummy" },
+            CreatedBy = Guid.NewGuid(),
+            UpdatedBy = Guid.NewGuid()
+        };
+
+        var json = JsonSerializer.Serialize(product, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _client.PutAsync("/api/Product/1", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+
+    [Fact]
+    public async Task Post_ReturnsBadRequest_WhenProductIsNull()
+    {
+        var content = new StringContent("null", System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/Product", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 }

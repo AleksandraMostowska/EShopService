@@ -20,6 +20,7 @@ namespace EShop.Domain.Service.Impl
 
         public void AddProduct(Product product)
         {
+
             _repository.Add(product);
         }
 
@@ -40,7 +41,22 @@ namespace EShop.Domain.Service.Impl
 
         public void UpdateProduct(Product product)
         {
-            _repository.Update(product);
+            //_repository.Update(product);
+
+            var existingProduct = _repository.GetById(product.Id);
+            if (existingProduct == null) throw new Exception("Product not found");
+
+            existingProduct.Name = product.Name;
+            existingProduct.Price = product.Price;
+            existingProduct.Ean = product.Ean;
+            existingProduct.Sku = product.Sku;
+            existingProduct.Stock = product.Stock;
+            existingProduct.UpdatedBy = product.UpdatedBy;
+
+            var existingCategory = _repository.GetCategoryByName(product.Category.Name);
+            existingProduct.Category = existingCategory ?? new Category { Name = product.Category.Name };
+
+            _repository.SaveChanges();
         }
     }
 }

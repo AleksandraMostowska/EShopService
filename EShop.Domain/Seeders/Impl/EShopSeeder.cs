@@ -15,9 +15,9 @@ namespace EShop.Domain.Seeders.Impl
         {
             if (!context.Categories.Any())
             {
-                var category1 = new Category { Name = "Elektronika" };
-                var category2 = new Category { Name = "Smartfony" };
-                var category3 = new Category { Name = "Tablety" };
+                var category1 = new Category { Id = 1, Name = "Elektronika" };
+                var category2 = new Category { Id = 2, Name = "Smartfony" };
+                var category3 = new Category { Id = 3, Name = "Tablety" };
 
                 context.Categories.AddRange(category1, category2, category3);
                 context.SaveChanges();
@@ -26,9 +26,9 @@ namespace EShop.Domain.Seeders.Impl
             if (!context.Products.Any()) 
             {
 
-                var category1 = context.Categories.FirstOrDefault(c => c.Name == "Elektronika");
-                var category2 = context.Categories.FirstOrDefault(c => c.Name == "Smartfony");
-                var category3 = context.Categories.FirstOrDefault(c => c.Name == "Tablety");
+                var category1 = context.Categories.FirstOrDefault(c => c.Id == 1);
+                var category2 = context.Categories.FirstOrDefault(c => c.Id == 2);
+                var category3 = context.Categories.FirstOrDefault(c => c.Id == 3);
 
 
                 var products = new List<Product>
