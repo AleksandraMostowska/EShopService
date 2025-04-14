@@ -13,59 +13,46 @@ namespace EShop.Domain.Repositories.Impl
             _context = context;
         }
 
-        public void Add(Product product)
+        public async Task AddAsync(Product product)
         {
-            //var existingCategory = _context.Categories.FirstOrDefault(c => c.Name == product.Category.Name);
-            //if (existingCategory == null)
-            //{
-            //    existingCategory = new Category
-            //    {
-            //        Name = product.Category.Name
-            //    };
-            //    _context.Categories.Add(existingCategory);
-            //    _context.SaveChanges();
-            //}
-
-            _context.Products.Add(product);
-            _context.SaveChanges();
+            await _context.Products.AddAsync(product);
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var product = _context.Products.FirstOrDefault(p => p.Id == id); 
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
             if (product != null)
             {
-                _context.Products.Remove(product); 
-                _context.SaveChanges();            
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
             }
         }
 
-        public List<Product> GetAll()
+        public async Task<List<Product>> GetAllAsync()
         {
-            return _context.Products.Include(p => p.Category).ToList();
-            //return _context.Products.ToList();
+            return await _context.Products.Include(p => p.Category).ToListAsync();
         }
 
-        public Product? GetById(int id)
+        public async Task<Product?> GetByIdAsync(int id)
         {
-            return _context.Products.Include(p => p.Category).FirstOrDefault(p => p.Id == id);
-            //return _context.Products.FirstOrDefault(p => p.Id == id);
+            return await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public void Update(Product product)
+        public async Task UpdateAsync(Product product)
         {
-            _context.Update(product);
-            _context.SaveChanges();
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
         }
 
-        public Category GetCategoryByName(string name)
+        public async Task<Category?> GetCategoryByNameAsync(string name)
         {
-            return _context.Categories.FirstOrDefault(c => c.Name == name);
+            return await _context.Categories.FirstOrDefaultAsync(c => c.Name == name);
         }
 
-        public void SaveChanges()
+        public async Task SaveChangesAsync()
         {
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }

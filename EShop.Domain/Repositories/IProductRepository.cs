@@ -10,19 +10,18 @@ namespace EShop.Domain.Repositories
 {
     public interface IProductRepository
     {
+        Task<List<Product>> GetAllAsync();
 
-        public List<Product> GetAll();
+        Task<Product?> GetByIdAsync(int id);
 
-        public  Product? GetById(int id);
+        Task AddAsync(Product product);
 
-        public void Add(Product product);
+        Task UpdateAsync(Product product);
 
-        public void Update(Product product);
+        Task DeleteAsync(int id);
 
-        public void Delete(int id);
+        Task<Category?> GetCategoryByNameAsync(string name);
 
-        Category GetCategoryByName(string name);
-
-        void SaveChanges();
+        Task SaveChangesAsync();
     }
 }

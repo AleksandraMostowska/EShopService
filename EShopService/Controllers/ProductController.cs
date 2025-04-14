@@ -20,63 +20,64 @@ namespace EShopService.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Product>> Get()
+        public async Task<ActionResult<IEnumerable<Product>>> Get()
         {
-            return Ok(_productService.GetAllProducts()); 
+            var products = await _productService.GetAllProductsAsync();
+            return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Product> Get(int id)
+        public async Task<ActionResult<Product>> Get(int id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
-            return Ok(product); 
+            return Ok(product);
         }
 
         [HttpPost]
-        public ActionResult<Product> Post([FromBody] Product product)
+        public async Task<ActionResult<Product>> Post([FromBody] Product product)
         {
             if (product == null)
             {
                 return BadRequest("Product is null.");
             }
 
-            _productService.AddProduct(product);
-            return CreatedAtAction(nameof(Get), new { id = product.Id }, product); 
+            await _productService.AddProductAsync(product);
+            return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody] Product product)
+        public async Task<IActionResult> Put(int id, [FromBody] Product product)
         {
             if (product == null || id != product.Id)
             {
                 return BadRequest("Product is null or ID mismatch.");
             }
 
-            var existingProduct = _productService.GetProductById(id);
+            var existingProduct = await _productService.GetProductByIdAsync(id);
             if (existingProduct == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
 
-            _productService.UpdateProduct(product);
-            return NoContent(); 
+            await _productService.UpdateProductAsync(product);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
 
-            _productService.DeleteProduct(id);
-            return NoContent(); 
+            await _productService.DeleteProductAsync(id);
+            return NoContent();
         }
     }
 }

@@ -18,32 +18,31 @@ namespace EShop.Domain.Service.Impl
             _repository = repository;
         }
 
-        public void AddProduct(Product product)
+        // ZROBIC ADD NIESYNCHRONICZNY Z .RESULT
+        public async Task AddProductAsync(Product product)
         {
-
-            _repository.Add(product);
+            await _repository.AddAsync(product);
         }
 
-        public void DeleteProduct(int id)
+
+        public async Task DeleteProductAsync(int id)
         {
-            _repository.Delete(id);
+            await _repository.DeleteAsync(id);
         }
 
-        public List<Product> GetAllProducts()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
-            return _repository.GetAll();
+            return await _repository.GetAllAsync();
         }
 
-        public Product? GetProductById(int id)
+        public async Task<Product?> GetProductByIdAsync(int id)
         {
-            return _repository.GetById(id);
+            return await _repository.GetByIdAsync(id);
         }
 
-        public void UpdateProduct(Product product)
+        public async Task UpdateProductAsync(Product product)
         {
-            //_repository.Update(product);
-
-            var existingProduct = _repository.GetById(product.Id);
+            var existingProduct = await _repository.GetByIdAsync(product.Id);
             if (existingProduct == null) throw new Exception("Product not found");
 
             existingProduct.Name = product.Name;
@@ -53,10 +52,10 @@ namespace EShop.Domain.Service.Impl
             existingProduct.Stock = product.Stock;
             existingProduct.UpdatedBy = product.UpdatedBy;
 
-            var existingCategory = _repository.GetCategoryByName(product.Category.Name);
+            var existingCategory = await _repository.GetCategoryByNameAsync(product.Category.Name);
             existingProduct.Category = existingCategory ?? new Category { Name = product.Category.Name };
 
-            _repository.SaveChanges();
+            await _repository.SaveChangesAsync();
         }
     }
 }

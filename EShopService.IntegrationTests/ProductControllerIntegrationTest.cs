@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using Xunit.Abstractions;
 
 namespace EShopService.Tests.Controllers;
 
@@ -13,8 +15,9 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
 {
     private readonly HttpClient _client;
     private readonly WebApplicationFactory<Program> _factory;
+    private readonly ITestOutputHelper _output;
 
-    public ProductControllerTests(WebApplicationFactory<Program> factory)
+    public ProductControllerTests(WebApplicationFactory<Program> factory, ITestOutputHelper output)
     {
         _factory = factory
             .WithWebHostBuilder(builder =>
@@ -32,6 +35,8 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
             });
 
         _client = _factory.CreateClient();
+
+        _output = output;
     }
 
     [Fact]
@@ -401,6 +406,112 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
         var response = await _client.PostAsync("/api/Product", content);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+
+
+
+
+    [Fact]
+    public async Task Post_AddThousandsProductsAsync_ExceptedThousandsProducts()
+    {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        dbContext.Products.RemoveRange(dbContext.Products);
+        dbContext.Categories.RemoveRange(dbContext.Categories);
+        await dbContext.SaveChangesAsync();
+
+        var category = new Category { Name = "MyRandomCategory" };
+        dbContext.Categories.Add(category);
+        await dbContext.SaveChangesAsync();
+
+        var tasks = new List<Task>();
+
+        for (int i = 0; i < 10000; i++)
+        {
+            var factory = _factory.Services;
+            int productIndex = i;
+
+            tasks.Add(Task.Run(async () =>
+            {
+                var innerScope = factory.CreateScope();
+                var context = innerScope.ServiceProvider.GetRequiredService<DataContext>();
+
+                var cat = await context.Categories.FirstAsync(c => c.Name == "MyRandomCategory");
+
+                context.Products.Add(new Product
+                {
+                    Name = $"P: {productIndex}",
+                    Price = 10 + productIndex,
+                    Ean = $"{productIndex:D13}",
+                    Sku = $"XXX{productIndex:D5}",
+                    Stock = productIndex % 100,
+                    Category = cat,
+                    CreatedBy = Guid.NewGuid(),
+                    UpdatedBy = Guid.NewGuid()
+                });
+
+                await context.SaveChangesAsync();
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        stopwatch.Stop();
+        _output.WriteLine($"ASYNC TIME: {stopwatch.ElapsedMilliseconds} ms");
+
+        var total = await dbContext.Products.CountAsync();
+        Assert.Equal(10000, total);
+    }
+
+
+
+    [Fact]
+    public void Post_AddThousandsProducts_ExceptedThousandsProducts()
+    {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+        dbContext.Products.RemoveRange(dbContext.Products);
+        dbContext.Categories.RemoveRange(dbContext.Categories);
+        dbContext.SaveChanges();
+
+        var category = new Category { Name = "MyRandomCategory" };
+        dbContext.Categories.Add(category);
+        dbContext.SaveChanges();
+
+        for (int i = 0; i < 10000; i++)
+        {
+            var product = new Product
+            {
+                Name = $"P: {i}",
+                Price = 10 + i,
+                Ean = $"{i:D13}",
+                Sku = $"XXX{i:D5}",
+                Stock = i % 100,
+                Category = category,
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            dbContext.Products.Add(product);
+            dbContext.SaveChanges();
+        }
+
+        //dbContext.SaveChanges();
+
+        stopwatch.Stop();
+        _output.WriteLine($"SYNC TIME: {stopwatch.ElapsedMilliseconds} ms");
+
+        var total = dbContext.Products.Count();
+        Assert.Equal(10000, total);
     }
 
 }

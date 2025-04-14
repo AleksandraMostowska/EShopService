@@ -13,34 +13,32 @@ namespace EShop.Domain.Seeders.Impl
     {
         public async Task Seed()
         {
-            if (!context.Categories.Any())
+            if (!await context.Categories.AnyAsync())
             {
                 var category1 = new Category { Id = 1, Name = "Elektronika" };
                 var category2 = new Category { Id = 2, Name = "Smartfony" };
                 var category3 = new Category { Id = 3, Name = "Tablety" };
 
-                context.Categories.AddRange(category1, category2, category3);
-                context.SaveChanges();
+                await context.Categories.AddRangeAsync(category1, category2, category3);
+                await context.SaveChangesAsync();
             }
 
-            if (!context.Products.Any()) 
+            if (!await context.Products.AnyAsync())
             {
-
-                var category1 = context.Categories.FirstOrDefault(c => c.Id == 1);
-                var category2 = context.Categories.FirstOrDefault(c => c.Id == 2);
-                var category3 = context.Categories.FirstOrDefault(c => c.Id == 3);
-
+                var category1 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 1);
+                var category2 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 2);
+                var category3 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 3);
 
                 var products = new List<Product>
                 {
                     new Product
                     {
                         Name = "Telewizor",
-                        Price = 3500m, 
-                        Ean = "1234567890123", 
+                        Price = 3500m,
+                        Ean = "1234567890123",
                         Sku = "LAP12345",
-                        Stock = 50, 
-                        Category = category1 
+                        Stock = 50,
+                        Category = category1
                     },
                     new Product
                     {
@@ -62,8 +60,8 @@ namespace EShop.Domain.Seeders.Impl
                     }
                 };
 
-                context.Products.AddRange(products);
-                context.SaveChanges();
+                await context.Products.AddRangeAsync(products);
+                await context.SaveChangesAsync();
             }
         }
     }

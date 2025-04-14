@@ -9,14 +9,14 @@ namespace EShop.Domain.Services
 {
     public interface IProductService
     {
-        public List<Product> GetAllProducts();
+        Task<List<Product>> GetAllProductsAsync();
 
-        public Product? GetProductById(int id);
+        Task<Product?> GetProductByIdAsync(int id);
 
-        public void AddProduct(Product product);
+        Task AddProductAsync(Product product);
 
-        public void UpdateProduct(Product product);
+        Task UpdateProductAsync(Product product);
 
-        public void DeleteProduct(int id);
+        Task DeleteProductAsync(int id);
     }
 }
