@@ -1,3 +1,4 @@
+using EShop.Application.Service;
 using EShop.Domain;
 using EShop.Domain.Enums;
 using EShop.Domain.Exceptions;

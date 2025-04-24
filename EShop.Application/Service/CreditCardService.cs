@@ -2,13 +2,13 @@
 using EShop.Domain.Exceptions;
 using System.Text.RegularExpressions;
 
-namespace EShop.Application
+namespace EShop.Application.Service
 
 {
     public class CreditCardService
     {
 
-        public static string ValidateCard(String cardNumber)
+        public static string ValidateCard(string cardNumber)
         {
             var cardNumLen = cardNumber.Length;
             if (cardNumLen < 13) throw new CardNumberTooShortException("Card number too short.");

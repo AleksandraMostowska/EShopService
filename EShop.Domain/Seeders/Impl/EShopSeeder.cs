@@ -15,9 +15,9 @@ namespace EShop.Domain.Seeders.Impl
         {
             if (!await context.Categories.AnyAsync())
             {
-                var category1 = new Category { Id = 1, Name = "Elektronika" };
-                var category2 = new Category { Id = 2, Name = "Smartfony" };
-                var category3 = new Category { Id = 3, Name = "Tablety" };
+                var category1 = new Category { Name = "Elektronika" };
+                var category2 = new Category { Name = "Smartfony" };
+                var category3 = new Category { Name = "Tablety" };
 
                 await context.Categories.AddRangeAsync(category1, category2, category3);
                 await context.SaveChangesAsync();
@@ -25,9 +25,9 @@ namespace EShop.Domain.Seeders.Impl
 
             if (!await context.Products.AnyAsync())
             {
-                var category1 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 1);
-                var category2 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 2);
-                var category3 = await context.Categories.FirstOrDefaultAsync(c => c.Id == 3);
+                var category1 = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Elektronika");
+                var category2 = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Smartfony");
+                var category3 = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Tablety");
 
                 var products = new List<Product>
                 {

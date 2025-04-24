@@ -79,5 +79,23 @@ namespace EShopService.Controllers
             await _productService.DeleteProductAsync(id);
             return NoContent();
         }
+
+        [HttpPatch("{id}")]
+        public IActionResult Add(Product product)
+        {
+            if (product == null)
+            {
+                return BadRequest("Product is null.");
+            }
+            try
+            {
+                _productService.Add(product);
+                return Ok(new { message = "Product added successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

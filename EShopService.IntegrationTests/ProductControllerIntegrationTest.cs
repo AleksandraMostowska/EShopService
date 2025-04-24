@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Xunit.Abstractions;
 
@@ -512,6 +513,53 @@ public class ProductControllerTests : IClassFixture<WebApplicationFactory<Progra
 
         var total = dbContext.Products.Count();
         Assert.Equal(10000, total);
+    }
+
+
+    [Fact]
+    public async Task Add_AddProduct_Success()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            dbContext.Products.RemoveRange(dbContext.Products);
+            dbContext.Categories.RemoveRange(dbContext.Categories);
+            await dbContext.SaveChangesAsync();
+
+            var category = new Category { Name = "Electronics" };
+            dbContext.Categories.Add(category);
+            await dbContext.SaveChangesAsync();
+
+            var newProduct = new
+            {
+                Id = 1,
+                Name = "Smartphone",
+                Price = 2000,
+                Ean = "9876543210123",
+                Sku = "SMART123",
+                Stock = 15,
+                Category = new { Name = "Electronics" },
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(newProduct), System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _client.PatchAsync("/api/Product/1", content);
+
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var productInDb = await dbContext.Products.FirstOrDefaultAsync(p => p.Name == "Smartphone");
+
+            Assert.NotNull(productInDb);
+            Assert.Equal("Smartphone", productInDb.Name);
+            Assert.Equal(2000, productInDb.Price);
+            Assert.Equal("9876543210123", productInDb.Ean);
+            Assert.Equal("SMART123", productInDb.Sku);
+            Assert.Equal(15, productInDb.Stock);
+        }
     }
 
 }

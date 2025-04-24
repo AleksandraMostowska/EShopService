@@ -5,9 +5,9 @@ using EShop.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EShop.Domain.Repositories.Impl;
 using EShop.Domain.Service.Impl;
-using EShop.Application;
 using EShop.Domain.Seeders.Impl;
 using EShop.Domain.Seeders;
+using EShop.Application.Service;
 
 public class Program
 {
@@ -22,7 +22,18 @@ public class Program
         //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
         builder.Services.AddDbContext<DataContext>(options =>
-            options.UseInMemoryDatabase("TestDatabase"));
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.MigrationsAssembly("EShopService")));
+
+        //var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+        //builder.Services.AddDbContext<DataContext>(options =>
+        //    options.UseSqlServer(connectionString,
+        //        sqlOptions => sqlOptions.MigrationsAssembly("EShopService")));
+
+
+
+        //builder.Services.AddDbContext<DataContext>(options =>
+        //    options.UseInMemoryDatabase("TestDatabase"));
 
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<IProductService, ProductService>();

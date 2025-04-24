@@ -18,5 +18,7 @@ namespace EShop.Domain.Services
         Task UpdateProductAsync(Product product);
 
         Task DeleteProductAsync(int id);
+
+        void Add(Product product);
     }
 }

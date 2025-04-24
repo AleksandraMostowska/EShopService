@@ -24,6 +24,10 @@ namespace EShop.Domain.Service.Impl
             await _repository.AddAsync(product);
         }
 
+        public void Add(Product product)
+        {
+            _repository.AddAsync(product).GetAwaiter().GetResult(); ;
+        }
 
         public async Task DeleteProductAsync(int id)
         {
