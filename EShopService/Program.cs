@@ -25,6 +25,15 @@ public class Program
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 sqlOptions => sqlOptions.MigrationsAssembly("EShopService")));
 
+        //var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        //builder.Services.AddDbContext<DataContext>(options =>
+        //    options.UseSqlServer(connectionString, sqlOptions =>
+        //    { 
+        //        sqlOptions.EnableRetryOnFailure();
+        //    }),
+        //    ServiceLifetime.Transient);
+
+
         //var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
         //builder.Services.AddDbContext<DataContext>(options =>
         //    options.UseSqlServer(connectionString,
@@ -48,7 +57,22 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+
+
         var app = builder.Build();
+
+        
 
         var scope = app.Services.CreateScope();
         var seeder = scope.ServiceProvider.GetRequiredService<IEShopSeeder>();
@@ -61,7 +85,10 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
+
+        app.UseCors("AllowAll");
+
 
         app.UseAuthorization();
 
