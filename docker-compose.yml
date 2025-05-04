@@ -2,19 +2,13 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      SA_PASSWORD: "YourPassword123"
+      SA_PASSWORD: "${SA_PASSWORD}"
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
     volumes:
       - mssql_data:/var/opt/mssql
-      - ./docker/sql:/docker-entrypoint-initdb.d
-    command: >
-      /bin/bash -c "
-        /opt/mssql/bin/sqlservr & 
-        sleep 20; 
-        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -i /docker-entrypoint-initdb.d/init.sql; 
-        wait"
+      # - ./docker/sql:/docker-entrypoint-initdb.d
 
 
   eshopservice:
@@ -24,9 +18,27 @@ services:
     depends_on:
       - db
     environment:
-      - ConnectionStrings__DefaultConnection=Server=${DB_HOST};Database=${DB_NAME};User Id=${DB_USER};Password=${SA_PASSWORD};TrustServerCertificate=True;
+      - CONNECTION_STRING=Server=${DB_HOST};Database=${DB_NAME};User Id=${DB_USER};Password=${SA_PASSWORD};Encrypt=False;TrustServerCertificate=True;
+      # - ConnectionStrings__DefaultConnection=Server=${DB_HOST};Database=${DB_NAME};User Id=${DB_USER};Password=${SA_PASSWORD};TrustServerCertificate=True;
     ports:
       - "8080:8080"
+  
+  # userservice:
+  #   image: ${DOCKER_REGISTRY-}userservice
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     - CONNECTION_STRING=Server=${DB_HOST};Database=${DB_NAME};User Id=${DB_USER};Password=${SA_PASSWORD};Encrypt=False;TrustServerCertificate=True;
+  #     - ConnectionStrings__DefaultConnection=Server=${DB_HOST};Database=${DB_NAME};User Id=${DB_USER};Password=${SA_PASSWORD};TrustServerCertificate=True;
+  #   build:
+  #     context: .
+  #     dockerfile: UserService/Dockerfile
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
       
   
 

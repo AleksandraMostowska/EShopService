@@ -15,34 +15,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
-
-
         //builder.Services.AddDbContext<DataContext>(options =>
-        //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
         builder.Services.AddDbContext<DataContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-                sqlOptions => sqlOptions.MigrationsAssembly("EShopService")));
+            options.UseSqlServer(connectionString), ServiceLifetime.Transient);
 
-        //var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-        //builder.Services.AddDbContext<DataContext>(options =>
-        //    options.UseSqlServer(connectionString, sqlOptions =>
-        //    { 
-        //        sqlOptions.EnableRetryOnFailure();
-        //    }),
-        //    ServiceLifetime.Transient);
-
-
-        //var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-        //builder.Services.AddDbContext<DataContext>(options =>
-        //    options.UseSqlServer(connectionString,
-        //        sqlOptions => sqlOptions.MigrationsAssembly("EShopService")));
-
-
-
-        //builder.Services.AddDbContext<DataContext>(options =>
-        //    options.UseInMemoryDatabase("TestDatabase"));
 
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<IProductService, ProductService>();
@@ -58,25 +37,30 @@ public class Program
         builder.Services.AddSwaggerGen();
 
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowAll", policy =>
-            {
-                policy
-                    .AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
-            });
-        });
+        //builder.Services.AddCors(options =>
+        //{
+        //    options.AddPolicy("AllowAll", policy =>
+        //    {
+        //        policy
+        //            .AllowAnyOrigin()
+        //            .AllowAnyMethod()
+        //            .AllowAnyHeader();
+        //    });
+        //});
 
+        builder.Services.AddMemoryCache();
 
         var app = builder.Build();
 
-        
 
-        var scope = app.Services.CreateScope();
-        var seeder = scope.ServiceProvider.GetRequiredService<IEShopSeeder>();
-        await seeder.Seed();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+            await db.Database.MigrateAsync();
+            var seeder = scope.ServiceProvider.GetRequiredService<IEShopSeeder>();
+            await seeder.Seed();
+        }
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
