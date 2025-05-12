@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Cryptography;
 using System.Text;
 using User.Application.Services;
 using User.Domain.Models.JWT;
@@ -26,6 +27,10 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    var rsa = RSA.Create();
+    rsa.ImportFromPem(File.ReadAllText("./data/public.key"));
+    var publicKey = new RsaSecurityKey(rsa);
+
     var jwtConfig = jwtSettings.Get<JwtSettings>();
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -35,8 +40,20 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtConfig.Issuer,
         ValidAudience = jwtConfig.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
+        IssuerSigningKey = publicKey
     };
+
+    //var jwtConfig = jwtSettings.Get<JwtSettings>();
+    //options.TokenValidationParameters = new TokenValidationParameters
+    //{
+    //    ValidateIssuer = true,
+    //    ValidateAudience = true,
+    //    ValidateLifetime = true,
+    //    ValidateIssuerSigningKey = true,
+    //    ValidIssuer = jwtConfig.Issuer,
+    //    ValidAudience = jwtConfig.Audience,
+    //    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
+    //};
 });
 
 builder.Services.AddAuthorization(options =>

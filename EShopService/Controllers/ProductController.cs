@@ -1,6 +1,7 @@
 ﻿using EShop.Domain;
 using EShop.Domain.Models;
 using EShop.Domain.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,7 @@ namespace EShopService.Controllers
             return Ok(product);
         }
 
+        [Authorize(Policy = "EmployeeOnly")]
         [HttpPost]
         public async Task<ActionResult<Product>> Post([FromBody] Product product)
         {
@@ -49,6 +51,7 @@ namespace EShopService.Controllers
             return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
         }
 
+        [Authorize(Policy = "EmployeeOnly")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] Product product)
         {
@@ -67,6 +70,7 @@ namespace EShopService.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -80,6 +84,7 @@ namespace EShopService.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = "EmployeeOnly")]
         [HttpPatch("{id}")]
         public IActionResult Add(Product product)
         {
